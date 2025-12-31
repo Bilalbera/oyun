@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Görev Avcısı - Puan Sistemi</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .game-container { background: white; padding: 2rem; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 350px; text-align: center; }
+        .score-board { font-size: 2rem; font-weight: bold; color: #2ecc71; margin-bottom: 1rem; }
+        .task-list { text-align: left; list-style: none; padding: 0; }
+        .task-item { background: #f8f9fa; margin: 10px 0; padding: 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; transition: 0.3s; }
+        .task-item.completed { opacity: 0.5; text-decoration: line-through; background: #e8f5e9; }
+        button { background: #3498db; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; }
+        button:disabled { background: #bdc3c7; cursor: not-allowed; }
+        .progress-bar { background: #eee; height: 10px; border-radius: 5px; margin-top: 20px; overflow: hidden; }
+        .progress-fill { background: #2ecc71; height: 100%; width: 0%; transition: 0.5s; }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <h1>Görev Avcısı</h1>
+    <div class="score-board">Puan: <span id="score">0</span></div>
+    
+    <ul class="task-list" id="taskList">
+        </ul>
+
+    <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+    </div>
+    <p id="message"></p>
+    <button onclick="resetGame()" style="background: #e74c3c; margin-top: 20px;">Sıfırla</button>
+</div>
+
+<script>
+    let score = localStorage.getItem('gameScore') ? parseInt(localStorage.getItem('gameScore')) : 0;
+    const tasks = [
+        { id: 1, text: "Günlük Giriş Yap", point: 10 },
+        { id: 2, text: "Kodlama Egzersizi", point: 20 },
+        { id: 3, text: "Bir Dosya Yükle", point: 15 },
+        { id: 4, text: "Projeyi Paylaş", point: 30 }
+    ];
+
+    let completedTasks = JSON.parse(localStorage.getItem('completedTasks')) || [];
+
+    function updateUI() {
+        document.getElementById('score').innerText = score;
+        const list = document.getElementById('taskList');
+        list.innerHTML = '';
+
+        tasks.forEach(task => {
+            const isDone = completedTasks.includes(task.id);
+            const li = document.createElement('li');
+            li.className = `task-item ${isDone ? 'completed' : ''}`;
+            li.innerHTML = `
+                <span>${task.text} (+${task.point})</span>
+                <button onclick="completeTask(${task.id}, ${task.point})" ${isDone ? 'disabled' : ''}>
+                    ${isDone ? 'Tamamlandı' : 'Yap'}
+                </button>
+            `;
+            list.appendChild(li);
+        });
+
+        const progress = (completedTasks.length / tasks.length) * 100;
+        document.getElementById('progressFill').style.width = progress + '%';
+    }
+
+    function completeTask(id, point) {
+        if (!completedTasks.includes(id)) {
+            score += point;
+            completedTasks.push(id);
+            localStorage.setItem('gameScore', score);
+            localStorage.setItem('completedTasks', JSON.stringify(completedTasks));
+            updateUI();
+        }
+    }
+
+    function resetGame() {
+        score = 0;
+        completedTasks = [];
+        localStorage.clear();
+        updateUI();
+    }
+
+    updateUI();
+</script>
+
+</body>
+</html>
