@@ -3,124 +3,188 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Görev Avcısı Pro - Seviye Sistemi</title>
+    <title>Level Up - Görev Oyunu</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background-color: #1a1a2e; color: #fff; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .game-container { background: #16213e; padding: 2rem; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.5); width: 380px; text-align: center; border: 1px solid #0f3460; }
-        .stats-container { display: flex; justify-content: space-around; margin-bottom: 20px; background: #0f3460; padding: 10px; border-radius: 10px; }
-        .stat-box { display: flex; flex-direction: column; }
-        .stat-label { font-size: 0.8rem; color: #4ecca3; }
-        .stat-value { font-size: 1.2rem; font-weight: bold; }
-        .task-list { text-align: left; list-style: none; padding: 0; }
-        .task-item { background: #1a1a2e; margin: 10px 0; padding: 12px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #4ecca3; }
-        .task-item.completed { opacity: 0.4; border-left-color: #95a5a6; }
-        button { background: #4ecca3; color: #1a1a2e; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        button:disabled { background: #555; cursor: not-allowed; color: #888; }
-        .level-up-anim { color: #f1c40f; font-weight: bold; animation: pulse 1s infinite; }
-        @keyframes pulse { 0% {transform: scale(1);} 50% {transform: scale(1.1);} 100% {transform: scale(1);} }
+        /* Genel Ayarlar */
+        body { font-family: 'Segoe UI', sans-serif; background-color: #121212; color: #fff; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        .app-container { width: 100%; max-width: 400px; height: 100vh; background: #1e1e2e; position: relative; display: flex; flex-direction: column; }
+        
+        /* Üst Bilgi Paneli */
+        .header { padding: 20px; text-align: center; background: #27293d; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 10; }
+        .level-badge { background: #e94560; padding: 5px 15px; border-radius: 20px; font-weight: bold; font-size: 0.9rem; letter-spacing: 1px; }
+        .multiplier { color: #f1c40f; font-size: 0.9rem; margin-top: 5px; display: block; }
+
+        /* Ana Ekran (Home View) */
+        #home-view { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+        
+        /* DEV PUAN BUTONU */
+        .score-button {
+            width: 200px; height: 200px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #2ecc71 0%, #27ae60 100%);
+            border: 8px solid #1e2a3a;
+            box-shadow: 0 0 30px rgba(46, 204, 113, 0.4);
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .score-button:active { transform: scale(0.95); box-shadow: 0 0 10px rgba(46, 204, 113, 0.2); }
+        .score-text { font-size: 3.5rem; font-weight: bold; line-height: 1; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        .score-label { font-size: 1rem; opacity: 0.8; margin-top: 5px; }
+        .tap-hint { margin-top: 20px; color: #aaa; font-size: 0.9rem; animation: float 2s infinite; }
+
+        /* Görev Ekranı (Task View) - Başlangıçta gizli */
+        #task-view { display: none; flex: 1; padding: 20px; overflow-y: auto; background: #1e1e2e; }
+        
+        .task-list { list-style: none; padding: 0; margin-top: 10px; }
+        .task-item { background: #27293d; margin-bottom: 15px; padding: 15px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; border-left: 5px solid #e94560; transition: 0.3s; }
+        .task-info h4 { margin: 0; font-size: 1rem; }
+        .task-info p { margin: 5px 0 0; color: #888; font-size: 0.8rem; }
+        
+        .btn-action { background: #e94560; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .btn-action:disabled { background: #444; color: #888; cursor: not-allowed; }
+        
+        .back-btn { background: transparent; border: 1px solid #555; color: #fff; padding: 10px; width: 100%; border-radius: 8px; cursor: pointer; margin-bottom: 20px; }
+
+        /* Animasyonlar */
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
     </style>
 </head>
 <body>
 
-<div class="game-container">
-    <h2>Görev Avcısı</h2>
-    
-    <div class="stats-container">
-        <div class="stat-box">
-            <span class="stat-label">SEVİYE</span>
-            <span class="stat-value" id="level">1</span>
-        </div>
-        <div class="stat-box">
-            <span class="stat-label">PUAN</span>
-            <span class="stat-value" id="score">0</span>
-        </div>
-        <div class="stat-box">
-            <span class="stat-label">ÇARPAN</span>
-            <span class="stat-value" id="multiplier">x1.0</span>
-        </div>
+<div class="app-container">
+    <div class="header">
+        <span class="level-badge">SEVİYE <span id="levelDisplay">1</span></span>
+        <span class="multiplier" id="multiplierDisplay">Çarpan: x1.0</span>
     </div>
 
-    <ul class="task-list" id="taskList"></ul>
+    <div id="home-view">
+        <div class="score-button" onclick="openTasks()">
+            <span class="score-text" id="mainScore">0</span>
+            <span class="score-label">PUAN</span>
+        </div>
+        <p class="tap-hint">👆 Görevler için butona tıkla</p>
+    </div>
 
-    <p id="message" style="min-height: 20px; color: #f1c40f;"></p>
-    
-    <button onclick="resetGame()" style="background: #e94560; color: white; margin-top: 10px; width: 100%;">Verileri Sıfırla</button>
+    <div id="task-view">
+        <button class="back-btn" onclick="openHome()">← Ana Ekrana Dön</button>
+        <h3 style="margin-top:0">Aktif Görevler</h3>
+        <ul class="task-list" id="taskList">
+            </ul>
+        
+        <button onclick="resetGame()" style="margin-top: 30px; background:none; border:none; color: #555; font-size: 0.8rem; width:100%;">Tümünü Sıfırla</button>
+    </div>
 </div>
 
 <script>
-    // Verileri Yükle
-    let score = parseFloat(localStorage.getItem('v2_score')) || 0;
-    let level = parseInt(localStorage.getItem('v2_level')) || 1;
-    let completedTasks = JSON.parse(localStorage.getItem('v2_completed')) || [];
+    // --- OYUN VERİLERİ ---
+    let score = parseFloat(localStorage.getItem('v3_score')) || 0;
+    let level = parseInt(localStorage.getItem('v3_level')) || 1;
+    let completedTasks = JSON.parse(localStorage.getItem('v3_completed')) || [];
 
     const tasks = [
-        { id: 1, text: "Kod Yaz", basePoint: 50 },
-        { id: 2, text: "Hata Ayıkla", basePoint: 100 },
-        { id: 3, text: "Döküman Oku", basePoint: 30 },
-        { id: 4, text: "Yeni Özellik Ekle", basePoint: 200 }
+        { id: 1, text: "Sabah Kahvesi İç", desc: "Güne zinde başla", base: 10 },
+        { id: 2, text: "GitHub'a Commit At", desc: "Yeşil kutuları doldur", base: 50 },
+        { id: 3, text: "HTML/CSS Çalış", desc: "Arayüzü geliştir", base: 30 },
+        { id: 4, text: "Spor Yap", desc: "15 dakika egzersiz", base: 40 },
+        { id: 5, text: "Kitap Oku", desc: "10 Sayfa oku", base: 25 }
     ];
 
+    // --- EKRAN YÖNETİMİ ---
+    function openTasks() {
+        document.getElementById('home-view').style.display = 'none';
+        document.getElementById('task-view').style.display = 'block';
+    }
+
+    function openHome() {
+        document.getElementById('task-view').style.display = 'none';
+        document.getElementById('home-view').style.display = 'flex';
+    }
+
+    // --- OYUN MANTIĞI ---
     function getMultiplier() {
-        // Her seviye için çarpanı 0.1 artırır (Lvl 1 = 1.0, Lvl 2 = 1.1 ...)
         return 1 + (level - 1) * 0.1;
     }
 
     function updateUI() {
-        const currentMultiplier = getMultiplier();
-        document.getElementById('score').innerText = Math.floor(score);
-        document.getElementById('level').innerText = level;
-        document.getElementById('multiplier').innerText = `x${currentMultiplier.toFixed(1)}`;
+        const mult = getMultiplier();
+        
+        // Skor ve Level Güncelleme
+        document.getElementById('mainScore').innerText = Math.floor(score);
+        document.getElementById('levelDisplay').innerText = level;
+        document.getElementById('multiplierDisplay').innerText = `Kazanç Çarpanı: x${mult.toFixed(1)}`;
 
+        // Görev Listesini Oluşturma
         const list = document.getElementById('taskList');
         list.innerHTML = '';
 
         tasks.forEach(task => {
             const isDone = completedTasks.includes(task.id);
-            const gainedPoint = (task.basePoint * currentMultiplier).toFixed(0);
-            
+            const reward = Math.floor(task.base * mult);
+
             const li = document.createElement('li');
-            li.className = `task-item ${isDone ? 'completed' : ''}`;
+            li.className = 'task-item';
+            if(isDone) li.style.opacity = '0.5';
+
             li.innerHTML = `
-                <span>${task.text} <small>(+${gainedPoint})</small></span>
-                <button onclick="completeTask(${task.id}, ${task.basePoint})" ${isDone ? 'disabled' : ''}>
-                    ${isDone ? 'Bitti' : 'Yap'}
-                </button>
+                <div class="task-info">
+                    <h4>${task.text}</h4>
+                    <p>${task.desc}</p>
+                </div>
+                <div style="text-align:right;">
+                    <div style="font-size:0.8rem; color:#2ecc71; margin-bottom:5px;">+${reward} P</div>
+                    <button class="btn-action" onclick="completeTask(${task.id}, ${task.base})" ${isDone ? 'disabled' : ''}>
+                        ${isDone ? '✓' : 'YAP'}
+                    </button>
+                </div>
             `;
             list.appendChild(li);
         });
-
-        // Seviye Atlama Kontrolü (Her 100 puanda bir seviye)
-        let nextLevelThreshold = level * 100;
-        if (score >= nextLevelThreshold) {
-            level++;
-            document.getElementById('message').innerText = "TEBRİKLER! SEVİYE ATLADIN!";
-            localStorage.setItem('v2_level', level);
-            setTimeout(() => { document.getElementById('message').innerText = ""; }, 3000);
-            updateUI();
-        }
     }
 
     function completeTask(id, basePoint) {
         if (!completedTasks.includes(id)) {
-            const bonus = basePoint * getMultiplier();
-            score += bonus;
+            const earned = basePoint * getMultiplier();
+            score += earned;
             completedTasks.push(id);
             
-            localStorage.setItem('v2_score', score);
-            localStorage.setItem('v2_completed', JSON.stringify(completedTasks));
+            checkLevelUp();
+            saveData();
             updateUI();
+            
+            // Ufak bir bildirim (opsiyonel)
+            // alert(`+${Math.floor(earned)} Puan Kazandın!`); 
         }
+    }
+
+    function checkLevelUp() {
+        // Her 200 puanda bir seviye atla
+        const threshold = level * 200;
+        if (score >= threshold) {
+            level++;
+            alert(`TEBRİKLER! SEVİYE ${level} OLDUN! \nÇarpanın arttı!`);
+        }
+    }
+
+    function saveData() {
+        localStorage.setItem('v3_score', score);
+        localStorage.setItem('v3_level', level);
+        localStorage.setItem('v3_completed', JSON.stringify(completedTasks));
     }
 
     function resetGame() {
-        if(confirm("Tüm ilerleme silinsin mi?")) {
+        if(confirm("Tüm puanların silinecek. Emin misin?")) {
             localStorage.clear();
-            score = 0; level = 1; completedTasks = [];
-            updateUI();
+            location.reload();
         }
     }
 
+    // Başlat
     updateUI();
 </script>
+
 </body>
 </html>
