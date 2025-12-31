@@ -3,88 +3,124 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Görev Avcısı - Puan Sistemi</title>
+    <title>Görev Avcısı Pro - Seviye Sistemi</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .game-container { background: white; padding: 2rem; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 350px; text-align: center; }
-        .score-board { font-size: 2rem; font-weight: bold; color: #2ecc71; margin-bottom: 1rem; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: #1a1a2e; color: #fff; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .game-container { background: #16213e; padding: 2rem; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.5); width: 380px; text-align: center; border: 1px solid #0f3460; }
+        .stats-container { display: flex; justify-content: space-around; margin-bottom: 20px; background: #0f3460; padding: 10px; border-radius: 10px; }
+        .stat-box { display: flex; flex-direction: column; }
+        .stat-label { font-size: 0.8rem; color: #4ecca3; }
+        .stat-value { font-size: 1.2rem; font-weight: bold; }
         .task-list { text-align: left; list-style: none; padding: 0; }
-        .task-item { background: #f8f9fa; margin: 10px 0; padding: 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; transition: 0.3s; }
-        .task-item.completed { opacity: 0.5; text-decoration: line-through; background: #e8f5e9; }
-        button { background: #3498db; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; }
-        button:disabled { background: #bdc3c7; cursor: not-allowed; }
-        .progress-bar { background: #eee; height: 10px; border-radius: 5px; margin-top: 20px; overflow: hidden; }
-        .progress-fill { background: #2ecc71; height: 100%; width: 0%; transition: 0.5s; }
+        .task-item { background: #1a1a2e; margin: 10px 0; padding: 12px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #4ecca3; }
+        .task-item.completed { opacity: 0.4; border-left-color: #95a5a6; }
+        button { background: #4ecca3; color: #1a1a2e; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        button:disabled { background: #555; cursor: not-allowed; color: #888; }
+        .level-up-anim { color: #f1c40f; font-weight: bold; animation: pulse 1s infinite; }
+        @keyframes pulse { 0% {transform: scale(1);} 50% {transform: scale(1.1);} 100% {transform: scale(1);} }
     </style>
 </head>
 <body>
 
 <div class="game-container">
-    <h1>Görev Avcısı</h1>
-    <div class="score-board">Puan: <span id="score">0</span></div>
+    <h2>Görev Avcısı</h2>
     
-    <ul class="task-list" id="taskList">
-        </ul>
-
-    <div class="progress-bar">
-        <div class="progress-fill" id="progressFill"></div>
+    <div class="stats-container">
+        <div class="stat-box">
+            <span class="stat-label">SEVİYE</span>
+            <span class="stat-value" id="level">1</span>
+        </div>
+        <div class="stat-box">
+            <span class="stat-label">PUAN</span>
+            <span class="stat-value" id="score">0</span>
+        </div>
+        <div class="stat-box">
+            <span class="stat-label">ÇARPAN</span>
+            <span class="stat-value" id="multiplier">x1.0</span>
+        </div>
     </div>
-    <p id="message"></p>
-    <button onclick="resetGame()" style="background: #e74c3c; margin-top: 20px;">Sıfırla</button>
+
+    <ul class="task-list" id="taskList"></ul>
+
+    <p id="message" style="min-height: 20px; color: #f1c40f;"></p>
+    
+    <button onclick="resetGame()" style="background: #e94560; color: white; margin-top: 10px; width: 100%;">Verileri Sıfırla</button>
 </div>
 
 <script>
-    let score = localStorage.getItem('gameScore') ? parseInt(localStorage.getItem('gameScore')) : 0;
+    // Verileri Yükle
+    let score = parseFloat(localStorage.getItem('v2_score')) || 0;
+    let level = parseInt(localStorage.getItem('v2_level')) || 1;
+    let completedTasks = JSON.parse(localStorage.getItem('v2_completed')) || [];
+
     const tasks = [
-        { id: 1, text: "Günlük Giriş Yap", point: 10 },
-        { id: 2, text: "Kodlama Egzersizi", point: 20 },
-        { id: 3, text: "Bir Dosya Yükle", point: 15 },
-        { id: 4, text: "Projeyi Paylaş", point: 30 }
+        { id: 1, text: "Kod Yaz", basePoint: 50 },
+        { id: 2, text: "Hata Ayıkla", basePoint: 100 },
+        { id: 3, text: "Döküman Oku", basePoint: 30 },
+        { id: 4, text: "Yeni Özellik Ekle", basePoint: 200 }
     ];
 
-    let completedTasks = JSON.parse(localStorage.getItem('completedTasks')) || [];
+    function getMultiplier() {
+        // Her seviye için çarpanı 0.1 artırır (Lvl 1 = 1.0, Lvl 2 = 1.1 ...)
+        return 1 + (level - 1) * 0.1;
+    }
 
     function updateUI() {
-        document.getElementById('score').innerText = score;
+        const currentMultiplier = getMultiplier();
+        document.getElementById('score').innerText = Math.floor(score);
+        document.getElementById('level').innerText = level;
+        document.getElementById('multiplier').innerText = `x${currentMultiplier.toFixed(1)}`;
+
         const list = document.getElementById('taskList');
         list.innerHTML = '';
 
         tasks.forEach(task => {
             const isDone = completedTasks.includes(task.id);
+            const gainedPoint = (task.basePoint * currentMultiplier).toFixed(0);
+            
             const li = document.createElement('li');
             li.className = `task-item ${isDone ? 'completed' : ''}`;
             li.innerHTML = `
-                <span>${task.text} (+${task.point})</span>
-                <button onclick="completeTask(${task.id}, ${task.point})" ${isDone ? 'disabled' : ''}>
-                    ${isDone ? 'Tamamlandı' : 'Yap'}
+                <span>${task.text} <small>(+${gainedPoint})</small></span>
+                <button onclick="completeTask(${task.id}, ${task.basePoint})" ${isDone ? 'disabled' : ''}>
+                    ${isDone ? 'Bitti' : 'Yap'}
                 </button>
             `;
             list.appendChild(li);
         });
 
-        const progress = (completedTasks.length / tasks.length) * 100;
-        document.getElementById('progressFill').style.width = progress + '%';
+        // Seviye Atlama Kontrolü (Her 100 puanda bir seviye)
+        let nextLevelThreshold = level * 100;
+        if (score >= nextLevelThreshold) {
+            level++;
+            document.getElementById('message').innerText = "TEBRİKLER! SEVİYE ATLADIN!";
+            localStorage.setItem('v2_level', level);
+            setTimeout(() => { document.getElementById('message').innerText = ""; }, 3000);
+            updateUI();
+        }
     }
 
-    function completeTask(id, point) {
+    function completeTask(id, basePoint) {
         if (!completedTasks.includes(id)) {
-            score += point;
+            const bonus = basePoint * getMultiplier();
+            score += bonus;
             completedTasks.push(id);
-            localStorage.setItem('gameScore', score);
-            localStorage.setItem('completedTasks', JSON.stringify(completedTasks));
+            
+            localStorage.setItem('v2_score', score);
+            localStorage.setItem('v2_completed', JSON.stringify(completedTasks));
             updateUI();
         }
     }
 
     function resetGame() {
-        score = 0;
-        completedTasks = [];
-        localStorage.clear();
-        updateUI();
+        if(confirm("Tüm ilerleme silinsin mi?")) {
+            localStorage.clear();
+            score = 0; level = 1; completedTasks = [];
+            updateUI();
+        }
     }
 
     updateUI();
 </script>
-
 </body>
 </html>
